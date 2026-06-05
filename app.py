@@ -3,9 +3,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from speaker_cache import initialize_speaker_cache
-from command_cache import initialize_command_cache
-from routes import register_routes
+from core.speaker_cache import initialize_speaker_cache
+from core.command_cache import initialize_command_cache
+from api.routes import register_routes
 
 app = Flask(__name__)
 

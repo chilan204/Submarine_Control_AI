@@ -1,10 +1,14 @@
+import os
 import torch
 import torchaudio
 from speechbrain.pretrained import EncoderClassifier
 
+# Get the data directory path relative to this file
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "../../data/pretrained_models")
+
 classifier = EncoderClassifier.from_hparams(
     source="speechbrain/spkrec-ecapa-voxceleb",
-    savedir="pretrained_models/spkrec",
+    savedir=os.path.join(MODELS_DIR, "spkrec"),
     run_opts={"device": "cpu"}
 )
 

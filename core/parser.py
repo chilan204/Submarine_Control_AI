@@ -1,5 +1,5 @@
 import re
-from command_cache import get_command_cache
+from core.command_cache import get_command_cache
 
 
 def extract_number(text):
