@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+
+# virtual env
+venv/
+
+# cache folders
+audio_cache/
+uploads/
+samples/
+
+# env file
+.env
