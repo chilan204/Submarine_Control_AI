@@ -32,9 +32,13 @@ def identify_speaker(input_path, speaker_db):
     best_score = -1
     best_speaker = "unknown"
 
-    for name, path in speaker_db.items():
-        ref_signal = load_audio(path)
-        ref_emb = extract_embedding(ref_signal)
+    for name, info in speaker_db.items():
+        ref_emb_list = info.get("embedding")
+        if ref_emb_list:
+            ref_emb = torch.tensor(ref_emb_list)
+        else:
+            ref_signal = load_audio(info["filePath"])
+            ref_emb = extract_embedding(ref_signal)
 
         score = torch.cosine_similarity(input_emb, ref_emb, dim=0).item()
 

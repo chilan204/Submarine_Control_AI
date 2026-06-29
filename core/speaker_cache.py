@@ -2,6 +2,7 @@ import os
 import time
 import threading
 import requests
+import json
 
 SPEAKER_CACHE = {}
 cache_lock = threading.Lock()
@@ -29,9 +30,20 @@ def load_speaker_db():
         for item in data:
             user_id = str(item.get("userId"))
             file_path = item.get("filePath")
+            emb_str = item.get("embedding")
+
+            embedding_list = None
+            if emb_str:
+                try:
+                    embedding_list = json.loads(emb_str)
+                except Exception:
+                    pass
 
             if user_id and file_path:
-                speaker_db[user_id] = resolve_path(file_path)
+                speaker_db[user_id] = {
+                    "filePath": resolve_path(file_path),
+                    "embedding": embedding_list
+                }
 
         return speaker_db
 
