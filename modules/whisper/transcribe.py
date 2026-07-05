@@ -1,23 +1,26 @@
-import whisper
+from faster_whisper import WhisperModel
 
-model = whisper.load_model("base")
+# Use CPU for Whisper to avoid external cuBLAS/cuDNN DLL dependency issues on Windows.
+# "int8" quantization makes it run extremely fast on CPU (under 0.5 seconds for short commands).
+DEVICE = "cpu"
+COMPUTE_TYPE = "int8"
+
+print(f"[WHISPER] Using faster-whisper | device: {DEVICE} | compute: {COMPUTE_TYPE} | model: tiny")
+
+model = WhisperModel("tiny", device=DEVICE, compute_type=COMPUTE_TYPE, cpu_threads=4)
+
 
 def transcribe_audio(file_path, language=None):
-    audio = whisper.load_audio(file_path)
-    audio = whisper.pad_or_trim(audio)
-    
-    if language in ["vi", "en"]:
-        detected_lang = language
-    else:
-        try:
-            mel = whisper.log_mel_spectrogram(audio, n_mels=model.dims.n_mels).to(model.device)
-        except TypeError:
-            mel = whisper.log_mel_spectrogram(audio).to(model.device)
-            
-        _, probs = model.detect_language(mel)
-        
-        allowed_langs = {"vi": probs.get("vi", 0.0), "en": probs.get("en", 0.0)}
-        detected_lang = max(allowed_langs, key=allowed_langs.get)
-    
-    result = model.transcribe(file_path, language=detected_lang)
-    return result["text"]
+    if language not in ["vi", "en"]:
+        language = None
+
+    segments, info = model.transcribe(
+        file_path,
+        language=language,
+        beam_size=1,
+        vad_filter=True,
+    )
+
+    text = " ".join(segment.text for segment in segments).strip()
+
+    return text

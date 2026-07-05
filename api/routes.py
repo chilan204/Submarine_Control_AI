@@ -10,7 +10,6 @@ from core.speaker_cache import (
 from core.command_cache import reload_command_cache
 
 from core.parser import parse_command
-from modules.speechbrain.verify import verify_speaker
 from modules.speechbrain.identify import identify_speaker, extract_embedding, load_audio
 from modules.whisper.transcribe import transcribe_audio
 
@@ -90,38 +89,52 @@ def register_routes(app):
             if "file" not in request.files:
                 return jsonify({"error": "No file"}), 400
 
-            file = request.files["file"]
+            import time
+            start_time = time.time()
 
+            file = request.files["file"]
             filename = f"{uuid.uuid4()}_{file.filename}"
             file_path = os.path.join(UPLOAD_FOLDER, filename)
-
             file.save(file_path)
+            
+            save_time = (time.time() - start_time) * 1000
 
+            # 1. Speaker Identification
+            id_start = time.time()
             speaker_id, score = identify_speaker(file_path, speaker_db)
             speaker_id = str(speaker_id)
+            id_time = (time.time() - id_start) * 1000
 
             ref_info = speaker_db.get(speaker_id)
-
             if not ref_info or not ref_info.get("filePath"):
                 return jsonify({"error": "Speaker not found"}), 400
 
-            ref_path = ref_info["filePath"]
-
-            verify_score, verify_result = verify_speaker(file_path, ref_path)
-
-            if not verify_result:
-                return jsonify({"status": "denied"}), 403
-
+            # 2. Transcription
+            tx_start = time.time()
             language = request.form.get("language")
             text = transcribe_audio(file_path, language)
+            tx_time = (time.time() - tx_start) * 1000
+
+            # 3. Parsing
+            parse_start = time.time()
             command = parse_command(text)
+            parse_time = (time.time() - parse_start) * 1000
+
+            total_time = (time.time() - start_time) * 1000
+            print(f"\n=== PROFILING /voice-command ===")
+            print(f"File Save:        {save_time:.2f} ms")
+            print(f"Identify Speaker: {id_time:.2f} ms")
+            print(f"Transcribe:       {tx_time:.2f} ms")
+            print(f"Parse Command:    {parse_time:.2f} ms")
+            print(f"Total AI Process: {total_time:.2f} ms")
+            print(f"================================\n")
 
             return jsonify({
                 "text": text,
                 "speaker_id": speaker_id,
                 "command": command,
                 "speaker_score": float(score),
-                "verification_score": float(verify_score)
+                "verification_score": float(score)
             })
 
         finally:

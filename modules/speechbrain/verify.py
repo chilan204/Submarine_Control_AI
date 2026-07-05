@@ -1,14 +1,18 @@
 import os
+import torch
 import torchaudio
 from speechbrain.pretrained import SpeakerRecognition
 
 # Get the data directory path relative to this file
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "../../data/pretrained_models")
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"[SPEECHBRAIN VERIFY] Using device: {DEVICE}")
+
 verification = SpeakerRecognition.from_hparams(
     source="speechbrain/spkrec-ecapa-voxceleb",
     savedir=os.path.join(MODELS_DIR, "spkrec"),
-    run_opts={"device": "cpu"}
+    run_opts={"device": DEVICE}
 )
 
 def load_audio(path):

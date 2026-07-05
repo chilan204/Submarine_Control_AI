@@ -6,10 +6,13 @@ from speechbrain.pretrained import EncoderClassifier
 # Get the data directory path relative to this file
 MODELS_DIR = os.path.join(os.path.dirname(__file__), "../../data/pretrained_models")
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"[SPEECHBRAIN IDENTIFY] Using device: {DEVICE}")
+
 classifier = EncoderClassifier.from_hparams(
     source="speechbrain/spkrec-ecapa-voxceleb",
     savedir=os.path.join(MODELS_DIR, "spkrec"),
-    run_opts={"device": "cpu"}
+    run_opts={"device": DEVICE}
 )
 
 def load_audio(path):
@@ -35,7 +38,7 @@ def identify_speaker(input_path, speaker_db):
     for name, info in speaker_db.items():
         ref_emb_list = info.get("embedding")
         if ref_emb_list:
-            ref_emb = torch.tensor(ref_emb_list)
+            ref_emb = torch.tensor(ref_emb_list, device=DEVICE)
         else:
             ref_signal = load_audio(info["filePath"])
             ref_emb = extract_embedding(ref_signal)
