@@ -1,33 +1,24 @@
-import re
 from core.command_cache import get_command_cache
 
 
-def extract_number(text):
-    match = re.search(r'\d+', text)
-    return int(match.group()) if match else None
+def _normalize(text):
+    return " ".join((text or "").lower().split())
 
 
 def parse_command(text):
-    text = text.lower().strip()
+    normalized_text = _normalize(text)
+    if not normalized_text:
+        return None
 
-    commands = get_command_cache()
+    for command in get_command_cache():
+        # Vosk is already constrained to database phrases. Exact matching keeps
+        # malformed/combined transcripts from becoming physical AUV commands.
+        if _normalize(command["keyword"]) != normalized_text:
+            continue
 
-    for cmd in commands:
+        result = {"action": command["action"]}
+        if command.get("direction"):
+            result["direction"] = command["direction"]
+        return result
 
-        keyword = cmd["keyword"]
-
-        if keyword in text:
-
-            result = {
-                "action": cmd["action"]
-            }
-
-            if cmd.get("direction"):
-                result["direction"] = cmd["direction"]
-
-            if cmd.get("hasValue", True):
-                result["value"] = extract_number(text)
-
-            return result
-
-    return {"action": "UNKNOWN"}
+    return None

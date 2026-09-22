@@ -4,11 +4,15 @@ __pycache__/
 
 # virtual env
 venv/
+.venv/
 
 # cache folders
 audio_cache/
 uploads/
 samples/
+
+# Downloaded speech-recognition models
+data/pretrained_models/vosk-model-*/
 
 # env file
 .env
